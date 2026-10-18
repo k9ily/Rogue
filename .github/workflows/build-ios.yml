@@ -1,0 +1,51 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: godot --headless --import || true
+
+      - name: Export Xcode project
+        run: |
+          mkdir -p build
+          godot --headless --export-release "iOS" build/ios_project.zip
+
+      - name: Unzip Xcode project
+        run: |
+          cd build
+          unzip -o ios_project.zip -d ios_project
+
+      - name: Build unsigned IPA
+        run: |
+          cd build/ios_project
+          PROJ=$(ls -d *.xcodeproj | head -n1)
+          SCHEME=$(basename "$PROJ" .xcodeproj)
+          xcodebuild -project "$PROJ" -scheme "$SCHEME" \
+            -configuration Release -sdk iphoneos \
+            -archivePath "$PWD/build/app.xcarchive" \
+            archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          mkdir -p "$PWD/build/Payload"
+          cp -R "$PWD/build/app.xcarchive/Products/Applications/"*.app "$PWD/build/Payload/"
+          cd "$PWD/build"
+          zip -r app.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ios_project/build/app.ipa
