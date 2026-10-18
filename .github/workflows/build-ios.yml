@@ -23,12 +23,7 @@ jobs:
       - name: Export Xcode project
         run: |
           mkdir -p build
-          godot --headless --export-release "iOS" build/ios_project.zip
-
-      - name: Unzip Xcode project
-        run: |
-          cd build
-          unzip -o ios_project.zip -d ios_project
+          godot --headless --export-release "iOS" build/ios_project
 
       - name: Build unsigned IPA
         run: |
