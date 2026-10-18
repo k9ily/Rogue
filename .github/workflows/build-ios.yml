@@ -10,6 +10,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create dummy icon
+        run: |
+          sips -s format png -z 1024 1024 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.png
+
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
