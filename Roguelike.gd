@@ -121,10 +121,10 @@ class PlayerOverlay extends Node2D:
 	func _draw() -> void:
 		if swing_timer > 0:
 			var vp := get_viewport().get_visible_rect().size
-			var t := 1.0 - swing_timer
-			var swing := sin(t * PI)
+			var t: float = 1.0 - swing_timer
+			var swing: float = sin(t * PI)
 			var base_pos := Vector2(vp.x * 0.7, vp.y + 50)
-			var angle := lerp(-PI / 3, PI / 4, swing)
+			var angle: float = lerp(-PI / 3, PI / 4, swing)
 			var length := 350.0
 			var tip := base_pos + Vector2(sin(angle), -cos(angle)) * length
 			draw_line(base_pos, tip, Color(0.8, 0.8, 0.9, 0.9), 20.0)
@@ -206,7 +206,7 @@ func _process(delta: float) -> void:
 		if message_timer <= 0 and message_label:
 			message_label.visible = false
 
-	var time := Time.get_ticks_msec() / 1000.0
+	var time: float = Time.get_ticks_msec() / 1000.0
 	for i in range(torch_lights.size()):
 		if is_instance_valid(torch_lights[i]):
 			torch_lights[i].energy = 1.5 + sin(time * 5.0 + i) * 0.2
@@ -216,7 +216,7 @@ func _process(delta: float) -> void:
 	var needs_redraw := false
 	for enemy in enemies:
 		if enemy.get("anim_timer", 0.0) > 0:
-			enemy["anim_timer"] = max(0.0, enemy["anim_timer"] - delta * 2.5)
+			enemy["anim_timer"] = maxf(0.0, enemy["anim_timer"] - delta * 2.5)
 			needs_redraw = true
 	if needs_redraw:
 		queue_redraw()
@@ -524,7 +524,7 @@ func _generate_level(lvl: int) -> void:
 		boss_ambient_light.color = Color(1.0, 0.1, 0.1, 0.8)
 		boss_ambient_light.energy = 2.0
 		var room_center := Vector2(boss_room_rect.get_center()) * TILE_SIZE
-		var max_dim := max(boss_room_rect.size.x, boss_room_rect.size.y) * TILE_SIZE
+		var max_dim: float = maxf(float(boss_room_rect.size.x), float(boss_room_rect.size.y)) * TILE_SIZE
 		boss_ambient_light.texture_scale = (max_dim / 128.0) * 1.5
 		boss_ambient_light.position = room_center
 		add_child(boss_ambient_light)
@@ -1167,8 +1167,8 @@ func _draw_enemy(enemy: Dictionary) -> void:
 	var draw_pos := base_pos
 
 	if anim > 0:
-		var p := anim / 0.4
-		var ext := sin(p * PI)
+		var p: float = anim / 0.4
+		var ext: float = sin(p * PI)
 		var target_pos := Vector2(player_cell) * TILE_SIZE + Vector2(20, 20)
 		var my_pos := base_pos + Vector2(20, 20)
 		var dir := (target_pos - my_pos).normalized()
@@ -1187,8 +1187,8 @@ func _draw_regular_visual(enemy: Dictionary, pos: Vector2, anim: float) -> void:
 	var color_dark: Color = enemy["color_dark"]
 	var t: String = enemy["type"]
 	var cx := pos + Vector2(20, 20)
-	var p := anim / 0.4
-	var ext := sin(p * PI) if anim > 0 else 0.0
+	var p: float = anim / 0.4
+	var ext: float = sin(p * PI) if anim > 0 else 0.0
 	var target_pos := Vector2(player_cell) * TILE_SIZE + Vector2(20, 20)
 	var dir_to_player := (target_pos - cx).normalized()
 
@@ -1286,8 +1286,8 @@ func _draw_boss_visual(enemy: Dictionary, pos: Vector2, anim: float) -> void:
 	var color_dark: Color = enemy["color_dark"]
 	var t: String = enemy["type"]
 	var cx := pos + Vector2(20, 20)
-	var p := anim / 0.4
-	var ext := sin(p * PI) if anim > 0 else 0.0
+	var p: float = anim / 0.4
+	var ext: float = sin(p * PI) if anim > 0 else 0.0
 	var target_pos := Vector2(player_cell) * TILE_SIZE + Vector2(20, 20)
 	var dir_to_player := (target_pos - cx).normalized()
 
@@ -1310,7 +1310,7 @@ func _draw_boss_visual(enemy: Dictionary, pos: Vector2, anim: float) -> void:
 
 		"medusa":
 			for i in 5:
-				var angle := -PI + i * (PI / 4)
+				var angle: float = -PI + i * (PI / 4)
 				draw_line(cx + Vector2(0, -10), cx + Vector2(cos(angle), sin(angle)) * 18, color_dark, 3.0)
 			draw_rect(Rect2(cx + Vector2(-10, -4), Vector2(20, 16)), color)
 			draw_rect(Rect2(cx + Vector2(-6, 0), Vector2(4, 4)), Color.RED)
@@ -1363,7 +1363,7 @@ func _draw_hp_bar(pos: Vector2, hp: float, max_hp: float) -> void:
 	var bar_pos := pos + Vector2(4, -6)
 	var w := TILE_SIZE - 8
 	draw_rect(Rect2(bar_pos, Vector2(w, 4)), Color.BLACK)
-	var ratio := clampf(hp / max_hp, 0.0, 1.0)
+	var ratio: float = clampf(hp / max_hp, 0.0, 1.0)
 	var bar_color := Color(0.9, 0.2, 0.2)
 	draw_rect(Rect2(bar_pos, Vector2(w * ratio, 4)), bar_color)
 	draw_rect(Rect2(bar_pos, Vector2(w, 4)), Color(0, 0, 0), false, 1.0)
