@@ -26,8 +26,8 @@ jobs:
 
       - name: Export Xcode project
         run: |
-          mkdir -p build
-          godot --headless --export-release "iOS" build/ios_project
+          mkdir -p build/ios_project
+          godot --headless --verbose --export-release "iOS" build/ios_project
 
       - name: Build unsigned IPA
         run: |
