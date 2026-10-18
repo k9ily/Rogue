@@ -25,12 +25,12 @@ jobs:
           include-templates: true
 
       - name: Import project
-        run: godot --headless --import || true
+        run: godot --headless --editor --quit
 
       - name: Export Xcode project
         run: |
           mkdir -p build/ios_project
-          godot --headless --verbose --export-release "iOS" build/ios_project
+          godot --headless --export-debug "iOS" build/ios_project
 
       - name: Build unsigned IPA
         run: |
