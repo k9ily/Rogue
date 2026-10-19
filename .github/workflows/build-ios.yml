@@ -30,7 +30,7 @@ jobs:
       - name: Import assets
         continue-on-error: true
         run: |
-          godot --headless --path . -e || true
+          godot --headless --editor --quit || true
 
       - name: Export Xcode project
         run: |
