@@ -17,9 +17,7 @@ jobs:
 
       - name: Create PNG icon and patch project.godot
         run: |
-          # Создаем правильную PNG-картинку на лету
           echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > icon.png
-          # Принудительно меняем иконку в project.godot
           sed -i 's|config/icon="res://icon.svg"|config/icon="res://icon.png"|g' project.godot
 
       - name: Generate minimal export_presets.cfg
@@ -50,7 +48,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build/web
+          path: ./build/Web # <--- ИСПРАВЛЕНО: Теперь с большой буквы
 
   deploy:
     environment:
