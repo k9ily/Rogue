@@ -6,7 +6,7 @@ on:
 env:
   GODOT_VERSION: 4.4.1
   IOS_PRESET: iOS
-  NAME: ${{ github.event.repository.name }}
+  NAME: Rogue
 
 jobs:
   build-ios:
@@ -23,17 +23,18 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Create build dir
-        run: mkdir -p build
+      - name: Install coreutils
+        run: brew install coreutils
 
-      - name: Fake export to import assets
+      - name: Import project
+        continue-on-error: true
         run: |
-          godot --headless --path . --export-pack "${IOS_PRESET}" build/app.pck || true
+          gtimeout 120 godot --headless --path . --editor --quit || true
 
       - name: Export to Xcode project
         run: |
           mkdir -p build/ios
-          godot --headless --path . --verbose --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
+          godot --headless --path . --export-release "iOS" build/ios/${NAME}.xcodeproj
 
       - name: Build unsigned archive
         run: |
