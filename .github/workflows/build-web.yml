@@ -15,11 +15,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create PNG icon and patch project.godot
-        run: |
-          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > icon.png
-          sed -i 's|config/icon="res://icon.svg"|config/icon="res://icon.png"|g' project.godot
-
       - name: Generate minimal export_presets.cfg
         run: |
           cat <<EOF > export_presets.cfg
@@ -28,8 +23,7 @@ jobs:
           platform="Web"
           runnable=true
           export_filter="all_resources"
-          export_path="build/web"
-
+          export_path="index.html"
           [preset.0.options]
           variant/extensions_support=false
           variant/thread_support=false
@@ -43,34 +37,39 @@ jobs:
           godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           relative_project_path: ./
-          archive_output: true # <--- ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ: заставляем создать архив
+          archive_output: true      # <-- Заставляем создать ZIP
+          archive_name: "web-build" # <-- Явно задаем имя архива
 
       - name: Prepare Artifact
         run: |
           mkdir -p public
-          # Ищем созданный ZIP-архив (теперь он точно будет)
-          ZIP_FILE=$(find . -name "*.zip" | head -n1)
+          # Ищем наш ZIP-файл в папке build
+          ZIP_FILE=$(find build -name "*.zip" | head -n1)
           
           if [ -z "$ZIP_FILE" ]; then
-            echo "ОШИБКА: Архив не найден!"
+            echo "Архив не найден в build, ищем везде..."
+            ZIP_FILE=$(find . -name "*.zip" | grep -v ".git" | head -n1)
+          fi
+          
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ОШИБКА: Архив так и не был создан!"
             exit 1
           fi
           
           echo "Найден архив: $ZIP_FILE"
           
-          # Распаковываем во временную папку
+          # Распаковываем
           mkdir -p temp_unzip
           unzip -q "$ZIP_FILE" -d temp_unzip
           
-          # Ищем, где именно лежит index.html
+          # Ищем index.html (он может быть в корне архива или в подпапке)
           INDEX_FILE=$(find temp_unzip -name "index.html" | head -n1)
-          echo "index.html найден по пути: $INDEX_FILE"
-          
-          # Копируем содержимое папки с игрой в public
           DIR_NAME=$(dirname "$INDEX_FILE")
+          
+          # Копируем всё в public
           cp -r "$DIR_NAME"/* public/
           
-          echo "Содержимое папки public:"
+          echo "Содержимое public:"
           ls -la public
 
       - name: Upload artifact
