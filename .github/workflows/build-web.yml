@@ -45,10 +45,13 @@ jobs:
           relative_project_path: ./
           archive_output: false
 
+      - name: Check build folder
+        run: ls -R build
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build/Web # <--- ИСПРАВЛЕНО: Теперь с большой буквы
+          path: ./build/web # <--- ИСПРАВЛЕНО: Теперь с маленькой буквы, как в export_path
 
   deploy:
     environment:
