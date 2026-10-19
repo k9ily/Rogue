@@ -22,6 +22,44 @@ jobs:
           use-dotnet: false
           include-templates: true
 
+      - name: Create dummy icon and patch project
+        run: |
+          # Создаем правильную 1x1 PNG картинку на лету
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > icon.png
+          # Меняем в project.godot ссылку на иконку с svg на png
+          sed -i 's|config/icon="res://icon.svg"|config/icon="res://icon.png"|' project.godot
+
+      - name: Generate export_presets.cfg
+        run: |
+          cat <<EOF > export_presets.cfg
+          [preset.0]
+          name="Web"
+          platform="Web"
+          runnable=true
+          advanced_options=false
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/web/index.html"
+
+          [preset.0.options]
+          custom_template/debug=""
+          custom_template/release=""
+          variant/extensions_support=false
+          variant/thread_support=false
+          vram_texture_compression/for_desktop=true
+          vram_texture_compression/for_mobile=true
+          html/export_icon=false
+          html/custom_html_shell=""
+          html/head_include=""
+          html/canvas_resize_policy=2
+          html/focus_canvas_on_start=true
+          html/experimental_virtual_keyboard=false
+          progressive_web_app/enabled=false
+          EOF
+
       - name: Clear cache
         run: rm -rf .godot
 
@@ -32,7 +70,7 @@ jobs:
       - name: Export Web
         run: |
           mkdir -p build/web
-          godot --headless --path . --export-debug "Web" build/web/index.html
+          godot --headless --path . --export-release "Web" build/web/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
