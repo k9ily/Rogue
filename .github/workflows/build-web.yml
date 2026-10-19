@@ -22,11 +22,6 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Create dummy icon
-        run: |
-          # Генерируем простую иконку для веба
-          convert -size 512x512 xc:'#4a90e2' icon.png || echo "Иконка не создана, пропускаем"
-
       - name: Export Web
         run: |
           mkdir -p build/web
