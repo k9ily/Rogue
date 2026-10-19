@@ -7,7 +7,6 @@ env:
   GODOT_VERSION: 4.4.1
   IOS_PRESET: iOS
   NAME: ${{ github.event.repository.name }}
-  HOMEBREW_NO_AUTO_UPDATE: 1
 
 jobs:
   build-ios:
@@ -16,8 +15,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - name: Setup Godot with export templates
         uses: chickensoft-games/setup-godot@v2
@@ -35,7 +32,7 @@ jobs:
         run: |
           mkdir -p build/ios
           godot --headless --path . \
-            --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
+            --export-debug "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
       - name: Build unsigned archive
         run: |
