@@ -26,12 +26,25 @@ jobs:
             -o godot.zip
           unzip -q godot.zip -d godot
 
-      - name: Install iOS export template
+      - name: Download and install export templates
         run: |
-          templates_root="$HOME/Library/Application Support/Godot/export_templates"
-          mkdir -p "$templates_root"
-          # Если у вас нет папки export_templates в репозитории, Godot скачает шаблоны автоматически
-          # при первом запуске, но это может занять время. Можно пропустить этот шаг.
+          TEMPLATES_VERSION=$(echo $GODOT_VERSION | sed 's/-stable//; s/-beta/.beta/; s/-rc/.rc/')
+          TEMPLATES_URL="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          echo "Downloading templates from: $TEMPLATES_URL"
+          curl -L "$TEMPLATES_URL" -o templates.tpz
+
+          TEMPLATES_ROOT="$HOME/Library/Application Support/Godot/export_templates"
+          mkdir -p "$TEMPLATES_ROOT/${TEMPLATES_VERSION}"
+
+          # Распаковываем .tpz (это zip-архив) во временную папку
+          mkdir -p /tmp/templates_extract
+          unzip -q templates.tpz -d /tmp/templates_extract
+
+          # Внутри архива папка "templates", копируем её содержимое в нужную директорию
+          cp -R /tmp/templates_extract/templates/* "$TEMPLATES_ROOT/${TEMPLATES_VERSION}/"
+
+          echo "Templates installed to: $TEMPLATES_ROOT/${TEMPLATES_VERSION}"
+          ls -la "$TEMPLATES_ROOT/${TEMPLATES_VERSION}/"
 
       - name: Import project
         continue-on-error: true
