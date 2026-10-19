@@ -23,25 +23,69 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Create build dir
-        run: mkdir -p build/ios
+      - name: Create dummy icon
+        run: |
+          sips -s format png -z 1024 1024 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.png
+
+      - name: Generate perfect export_presets.cfg
+        run: |
+          cat <<EOF > export_presets.cfg
+          [preset.0]
+
+          name="iOS"
+          platform="iOS"
+          runnable=true
+          advanced_options=false
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/ios/Rogue.xcodeproj"
+
+          [preset.0.options]
+
+          custom_template/debug=""
+          custom_template/release=""
+          architectures/arm64=true
+          application/app_store_team_id="A1B2C3D4E5"
+          application/bundle_identifier="com.example.roguelike"
+          application/export_project_only=true
+          icons/iphone_120x120="res://icon.png"
+          icons/iphone_180x180="res://icon.png"
+          icons/ipad_76x76="res://icon.png"
+          icons/ipad_152x152="res://icon.png"
+          icons/ipad_167x167="res://icon.png"
+          icons/app_store_1024x1024="res://icon.png"
+          icons/spotlight_40x40="res://icon.png"
+          icons/spotlight_80x80="res://icon.png"
+          icons/settings_58x58="res://icon.png"
+          icons/settings_87x87="res://icon.png"
+          icons/notification_40x40="res://icon.png"
+          icons/notification_60x60="res://icon.png"
+          storyboard/use_launch_screen_storyboard=false
+          storyboard/image_scale_mode=0
+          EOF
 
       - name: Import project
-        continue-on-error: true
         run: |
           godot --headless --path . --editor --quit || true
 
       - name: Export to Xcode project
         run: |
-          godot --headless --path . --export-release "iOS" build/ios
+          mkdir -p build/ios
+          godot --headless --path . --export-release "iOS" build/ios/Rogue.xcodeproj 2>&1 | tee export.log
 
       - name: Build unsigned archive
         run: |
-          PROJ=$(find build/ios -name "*.xcodeproj" | head -n1)
-          SCHEME=$(basename "$PROJ" .xcodeproj)
+          if [ ! -d "build/ios/Rogue.xcodeproj" ]; then
+            echo "Xcode project not found! Check export.log"
+            cat export.log
+            exit 1
+          fi
           xcodebuild archive \
-            -project "$PROJ" \
-            -scheme "$SCHEME" \
+            -project build/ios/Rogue.xcodeproj \
+            -scheme "Rogue" \
             -archivePath build/ios/App.xcarchive \
             -configuration Release \
             CODE_SIGN_STYLE=Manual \
@@ -55,12 +99,20 @@ jobs:
           cd build/ios
           mkdir -p Payload
           cp -R App.xcarchive/Products/Applications/*.app Payload/
-          zip -r "${NAME}.ipa" Payload
-          mv "${NAME}.ipa" ../../
+          zip -r "Rogue.ipa" Payload
+          mv "Rogue.ipa" ../../
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-ipa
-          path: ${{ env.NAME }}.ipa
+          path: Rogue.ipa
+          retention-days: 14
+
+      - name: Upload Export Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-log
+          path: export.log
           retention-days: 14
