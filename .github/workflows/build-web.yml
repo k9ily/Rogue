@@ -28,7 +28,7 @@ jobs:
           platform="Web"
           runnable=true
           export_filter="all_resources"
-          export_path="build/web/index.html"
+          export_path="web_build"
 
           [preset.0.options]
           variant/extensions_support=false
@@ -43,15 +43,26 @@ jobs:
           godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           relative_project_path: ./
-          archive_output: false
+          archive_output: true
+          archive_name: "web-build" # Заставим его создать web-build.zip
 
-      - name: Check build folder
-        run: ls -R build
+      - name: Prepare Artifact
+        run: |
+          mkdir -p public
+          # Ищем zip-файл, который создал firebelley, и распаковываем его
+          ZIP_FILE=$(find . -maxdepth 2 -name "*.zip" | head -n1)
+          if [ -n "$ZIP_FILE" ]; then
+             echo "Найден архив: $ZIP_FILE"
+             unzip -q "$ZIP_FILE" -d public
+          else
+             echo "ZIP не найден, ищем index.html напрямую"
+             find . -name "index.html"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build/web # <--- ИСПРАВЛЕНО: Теперь с маленькой буквы, как в export_path
+          path: ./public
 
   deploy:
     environment:
