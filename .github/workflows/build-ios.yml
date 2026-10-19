@@ -17,9 +17,6 @@ jobs:
         run: |
           sips -s format png -z 1024 1024 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.png
 
-      - name: Install coreutils
-        run: brew install coreutils
-
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
@@ -33,12 +30,12 @@ jobs:
       - name: Import assets
         continue-on-error: true
         run: |
-          gtimeout 60 godot --headless --path . -e || true
+          godot --headless --path . -e || true
 
       - name: Export Xcode project
         run: |
           mkdir -p build/ios_project
-          godot --headless --verbose --export-release "iOS" build/ios_project
+          godot --headless --verbose --export-debug "iOS" build/ios_project
 
       - name: Build unsigned IPA
         run: |
