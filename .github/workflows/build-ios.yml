@@ -23,24 +23,25 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Install coreutils
-        run: brew install coreutils
+      - name: Create build dir
+        run: mkdir -p build/ios
 
       - name: Import project
         continue-on-error: true
         run: |
-          gtimeout 120 godot --headless --path . --editor --quit || true
+          godot --headless --path . --editor --quit || true
 
       - name: Export to Xcode project
         run: |
-          mkdir -p build/ios
-          godot --headless --path . --export-release "iOS" build/ios/${NAME}.xcodeproj
+          godot --headless --path . --export-release "iOS" build/ios
 
       - name: Build unsigned archive
         run: |
+          PROJ=$(find build/ios -name "*.xcodeproj" | head -n1)
+          SCHEME=$(basename "$PROJ" .xcodeproj)
           xcodebuild archive \
-            -project build/ios/${NAME}.xcodeproj \
-            -scheme "${NAME}" \
+            -project "$PROJ" \
+            -scheme "$SCHEME" \
             -archivePath build/ios/App.xcarchive \
             -configuration Release \
             CODE_SIGN_STYLE=Manual \
