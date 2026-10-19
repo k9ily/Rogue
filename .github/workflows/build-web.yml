@@ -15,15 +15,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate minimal export_presets.cfg
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+          include-templates: true
+
+      - name: Create dummy icon and patch project
         run: |
+          # Создаем правильную PNG картинку (1x1 пиксель)
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" | base64 -d > icon.png
+          # Меняем в настройках проекта иконку с svg на png
+          sed -i 's|config/icon="res://icon.svg"|config/icon="res://icon.png"|g' project.godot
+
+      - name: Generate export_presets.cfg
+        run: |
+          # Создаем идеальный конфиг для Web
           cat <<EOF > export_presets.cfg
           [preset.0]
           name="Web"
           platform="Web"
           runnable=true
           export_filter="all_resources"
-          export_path="index.html"
+          export_path="build/web/index.html"
+
           [preset.0.options]
           variant/extensions_support=false
           variant/thread_support=false
@@ -31,51 +47,20 @@ jobs:
           progressive_web_app/enabled=false
           EOF
 
-      - name: Export with firebelley action
-        uses: firebelley/godot-export@v5.2.1
-        with:
-          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
-          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
-          relative_project_path: ./
-          archive_output: true      # <-- Заставляем создать ZIP
-          archive_name: "web-build" # <-- Явно задаем имя архива
-
-      - name: Prepare Artifact
+      - name: Clear cache and Import
         run: |
-          mkdir -p public
-          # Ищем наш ZIP-файл в папке build
-          ZIP_FILE=$(find build -name "*.zip" | head -n1)
-          
-          if [ -z "$ZIP_FILE" ]; then
-            echo "Архив не найден в build, ищем везде..."
-            ZIP_FILE=$(find . -name "*.zip" | grep -v ".git" | head -n1)
-          fi
-          
-          if [ -z "$ZIP_FILE" ]; then
-            echo "ОШИБКА: Архив так и не был создан!"
-            exit 1
-          fi
-          
-          echo "Найден архив: $ZIP_FILE"
-          
-          # Распаковываем
-          mkdir -p temp_unzip
-          unzip -q "$ZIP_FILE" -d temp_unzip
-          
-          # Ищем index.html (он может быть в корне архива или в подпапке)
-          INDEX_FILE=$(find temp_unzip -name "index.html" | head -n1)
-          DIR_NAME=$(dirname "$INDEX_FILE")
-          
-          # Копируем всё в public
-          cp -r "$DIR_NAME"/* public/
-          
-          echo "Содержимое public:"
-          ls -la public
+          rm -rf .godot
+          godot --headless --path . --import || true
+
+      - name: Export Web
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./public
+          path: build/web
 
   deploy:
     environment:
