@@ -31,7 +31,6 @@ jobs:
         run: |
           cat <<EOF > export_presets.cfg
           [preset.0]
-
           name="iOS"
           platform="iOS"
           runnable=true
@@ -44,11 +43,10 @@ jobs:
           export_path="build/ios"
 
           [preset.0.options]
-
           custom_template/debug=""
           custom_template/release=""
           architectures/arm64=true
-          application/app_store_team_id="A1B2C3D4E5"
+          application/app_store_team_id="ABCDE12345"
           application/bundle_identifier="com.example.roguelike"
           icons/iphone_120x120="res://icon.png"
           icons/iphone_180x180="res://icon.png"
@@ -62,16 +60,22 @@ jobs:
           icons/settings_87x87="res://icon.png"
           icons/notification_40x40="res://icon.png"
           icons/notification_60x60="res://icon.png"
+          storyboard/use_launch_screen_storyboard=false
+          storyboard/image_scale_mode=0
           EOF
 
       - name: Import project
         run: |
           godot --headless --path . --import || true
 
+      - name: Fake export to import assets
+        run: |
+          godot --headless --path . --export-pack "${IOS_PRESET}" build/app.pck || true
+
       - name: Export to Xcode project
         run: |
           mkdir -p build/ios
-          godot --headless --path . --export-release "iOS" build/ios 2>&1 | tee export.log
+          godot --headless --path . --export-release "${IOS_PRESET}" build/ios 2>&1 | tee export.log
 
       - name: Build unsigned archive
         run: |
