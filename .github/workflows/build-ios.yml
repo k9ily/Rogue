@@ -23,16 +23,17 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Import project
-        continue-on-error: true
+      - name: Create build dir
+        run: mkdir -p build
+
+      - name: Fake export to import assets
         run: |
-          godot --headless --path . --editor --quit || true
+          godot --headless --path . --export-pack "${IOS_PRESET}" build/app.pck || true
 
       - name: Export to Xcode project
         run: |
           mkdir -p build/ios
-          godot --headless --path . \
-            --export-debug "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
+          godot --headless --path . --verbose --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
       - name: Build unsigned archive
         run: |
