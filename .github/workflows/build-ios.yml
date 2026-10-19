@@ -27,9 +27,13 @@ jobs:
         run: |
           sips -s format png -z 1024 1024 /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns --out icon.png
 
-      - name: Import project
+      - name: Install coreutils
+        run: brew install coreutils
+
+      - name: Import assets
+        continue-on-error: true
         run: |
-          godot --headless --path . --import || true
+          gtimeout 120 godot --headless --path . -e || true
 
       - name: Fake export to import assets
         run: |
