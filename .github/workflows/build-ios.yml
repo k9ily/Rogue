@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  GODOT_VERSION: 4.4.1-stable
+  GODOT_VERSION: 4.4.1
   IOS_PRESET: iOS
   NAME: ${{ github.event.repository.name }}
   HOMEBREW_NO_AUTO_UPDATE: 1
@@ -19,42 +19,22 @@ jobs:
         with:
           lfs: true
 
-      - name: Download Godot headless
-        run: |
-          curl -L \
-            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_macos.universal.zip" \
-            -o godot.zip
-          unzip -q godot.zip -d godot
-
-      - name: Download and install export templates
-        run: |
-          TEMPLATES_VERSION=$(echo $GODOT_VERSION | sed 's/-stable//; s/-beta/.beta/; s/-rc/.rc/')
-          TEMPLATES_URL="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
-          echo "Downloading templates from: $TEMPLATES_URL"
-          curl -L "$TEMPLATES_URL" -o templates.tpz
-
-          TEMPLATES_ROOT="$HOME/Library/Application Support/Godot/export_templates"
-          mkdir -p "$TEMPLATES_ROOT/${TEMPLATES_VERSION}"
-
-          # Распаковываем .tpz (это zip-архив) во временную папку
-          mkdir -p /tmp/templates_extract
-          unzip -q templates.tpz -d /tmp/templates_extract
-
-          # Внутри архива папка "templates", копируем её содержимое в нужную директорию
-          cp -R /tmp/templates_extract/templates/* "$TEMPLATES_ROOT/${TEMPLATES_VERSION}/"
-
-          echo "Templates installed to: $TEMPLATES_ROOT/${TEMPLATES_VERSION}"
-          ls -la "$TEMPLATES_ROOT/${TEMPLATES_VERSION}/"
+      - name: Setup Godot with export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
 
       - name: Import project
         continue-on-error: true
         run: |
-          godot/Godot.app/Contents/MacOS/Godot --headless --path . --editor --quit || true
+          godot --headless --path . --editor --quit || true
 
       - name: Export to Xcode project
         run: |
           mkdir -p build/ios
-          godot/Godot.app/Contents/MacOS/Godot --headless --path . \
+          godot --headless --path . \
             --export-release "${IOS_PRESET}" build/ios/${NAME}.xcodeproj
 
       - name: Build unsigned archive
