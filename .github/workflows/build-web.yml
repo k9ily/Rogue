@@ -28,7 +28,7 @@ jobs:
           platform="Web"
           runnable=true
           export_filter="all_resources"
-          export_path="web_build"
+          export_path="build/web"
 
           [preset.0.options]
           variant/extensions_support=false
@@ -43,22 +43,30 @@ jobs:
           godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           relative_project_path: ./
+          archive_output: true # <--- ВОТ ГЛАВНОЕ ИСПРАВЛЕНИЕ: заставляем создать архив
 
       - name: Prepare Artifact
         run: |
           mkdir -p public
-          # Просто ищем index.html во всей папке проекта
-          INDEX_FILE=$(find . -name "index.html" | head -n1)
+          # Ищем созданный ZIP-архив (теперь он точно будет)
+          ZIP_FILE=$(find . -name "*.zip" | head -n1)
           
-          if [ -z "$INDEX_FILE" ]; then
-            echo "ОШИБКА: index.html не найден!"
-            find . -type f
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ОШИБКА: Архив не найден!"
             exit 1
           fi
           
-          echo "Файл найден по пути: $INDEX_FILE"
+          echo "Найден архив: $ZIP_FILE"
           
-          # Берем папку, в которой лежит index.html, и копируем всё оттуда в public
+          # Распаковываем во временную папку
+          mkdir -p temp_unzip
+          unzip -q "$ZIP_FILE" -d temp_unzip
+          
+          # Ищем, где именно лежит index.html
+          INDEX_FILE=$(find temp_unzip -name "index.html" | head -n1)
+          echo "index.html найден по пути: $INDEX_FILE"
+          
+          # Копируем содержимое папки с игрой в public
           DIR_NAME=$(dirname "$INDEX_FILE")
           cp -r "$DIR_NAME"/* public/
           
